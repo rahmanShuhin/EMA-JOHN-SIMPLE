@@ -1,25 +1,18 @@
 import React, { useState, useEffect } from "react";
 import "./Review.css";
-import happyimage from "../../images/giphy.gif";
 import {
   getDatabaseCart,
-  removeFromDatabaseCart,
-  processOrder
+  removeFromDatabaseCart
 } from "../../utilities/databaseManager";
-import fakeData from "../../fakeData";
+
 import Reviewitem from "../Reviewitem/Reviewitem";
 import Cart from "../Cart/Cart";
 import { Link } from "react-router-dom";
 import { useAuth } from "../../use.auth";
 const Review = () => {
   const [cart, setCart] = useState([]);
-  const [order, setOrder] = useState(false);
   const auth = useAuth();
-  const handlePlaceOrder = () => {
-    setCart([]);
-    setOrder(true);
-    processOrder();
-  };
+
   const handleButtonRemove = productKey => {
     //console.log(productKey);
     removeFromDatabaseCart(productKey);
@@ -29,15 +22,27 @@ const Review = () => {
   useEffect(() => {
     const savedCart = getDatabaseCart();
     const productKeys = Object.keys(savedCart);
-    const cartProducts = productKeys.map(key => {
-      const product = fakeData.find(pd => pd.key === key);
-      product.quantity = savedCart[key];
-      return product;
-    });
-    setCart(cartProducts);
+    fetch('http://localhost:5001/getProductsByKey', {
+      method: 'POST',
+      body: JSON.stringify(productKeys),
+      headers: {
+        "Content-type": "application/json; charset=UTF-8"
+      }
+    })
+      .then(response => response.json())
+      .then(data => {
+        // console.log("ami", data);
+        const cartProducts = productKeys.map(key => {
+          const product = data.find(pd => pd.key === key);
+          product.quantity = savedCart[key];
+          return product;
+        });
+        setCart(cartProducts);
+      })
+
   }, []);
   // console.log(cart);
-  const thank = <img src={happyimage} alt="" />;
+
   return (
     <div className="container">
       <div className="shop-container">
@@ -45,7 +50,7 @@ const Review = () => {
         {cart.map(x => (
           <Reviewitem cartItem={x} handleButtonRemove={handleButtonRemove} />
         ))}
-        {order && thank}
+
         {
           !cart.length && <h1>No Item In The Cart . Keep Shopping</h1>
         }

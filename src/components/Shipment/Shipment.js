@@ -2,10 +2,30 @@ import React from "react";
 import { useForm } from "react-hook-form";
 import "./Shipment.css";
 import { useAuth } from "../../use.auth";
+import { getDatabaseCart, processOrder } from "../../utilities/databaseManager";
 const Shipment = () => {
 
   const { register, handleSubmit, errors } = useForm();
-  const onSubmit = data => console.log(data);
+  const onSubmit = data => {
+    const savedCart = getDatabaseCart();
+    const orderDetail = {
+      email: auth.user.email,
+      cart: savedCart
+    }
+    fetch('http://localhost:5001/placeOrder', {
+      method: 'POST',
+      body: JSON.stringify(orderDetail),
+      headers: {
+        "Content-type": "application/json; charset=UTF-8"
+      }
+    })
+      .then(response => response.json())
+      .then(data => {
+        console.log(data);
+        alert("Successfully placed your order");
+        processOrder();
+      })
+  };
   const auth = useAuth();
   //console.log(auth.user);
   return (
